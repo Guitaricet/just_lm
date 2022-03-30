@@ -168,7 +168,7 @@ class ModelArguments:
             "help": "Floating-point format in which the model weights should be initialized and trained. Choose one of `[float32, float16, bfloat16]`."
         },
     )
-    init_range: float = field(default=None, type=float, metadata={"help": "Initialization range for the weights."})
+    init_range: float = field(default=None, metadata={"help": "Initialization range for the weights."})
 
 
 @dataclass
@@ -324,16 +324,6 @@ def main():
             f"Output directory ({training_args.output_dir}) already exists and is not empty."
             "Use --overwrite_output_dir to overcome."
         )
-    
-    if jax.process_index() == 0:
-        # note that if same key exists in multiple args, it will be overwritten by the last one
-        hparams = {
-            **vars(training_args),
-            **vars(model_args),
-            **vars(data_args),
-            **model.config.to_dict(),
-        }
-        wandb.init(project=training_args.wandb_project, config=hparams)
 
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
@@ -463,6 +453,16 @@ def main():
         model = FlaxAutoModelForCausalLM.from_config(
             config, seed=training_args.seed, dtype=getattr(jnp, model_args.dtype)
         )
+
+    if jax.process_index() == 0:
+        # note that if same key exists in multiple args, it will be overwritten by the last one
+        hparams = {
+            **vars(training_args),
+            **vars(model_args),
+            **vars(data_args),
+            **model.config.to_dict(),
+        }
+        wandb.init(project=training_args.wandb_project, config=hparams)
 
     # Preprocessing the datasets.
     # First we tokenize all the texts.
