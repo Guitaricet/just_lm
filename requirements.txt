@@ -1,0 +1,7 @@
+datasets
+tqdm
+jax
+optax
+transformers[flax]
+huggingface_hub
+wandb
